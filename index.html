@@ -707,9 +707,9 @@ async function doSignup(){
   const {data,error} = await sb.auth.signUp({email,password:pw})
   if(error){ showPage('pg-auth'); toast('가입 실패: '+error.message); return }
   const uid = data.user.id
-  await sb.from('sk_profiles').upsert({id:uid, username:email, role:'user', status:'pending', industry:selectedSignupIndustry})
-  showPage('pg-pending')
-  toast('가입 신청 완료! 관리자 승인을 기다려주세요.')
+  await sb.from('sk_profiles').upsert({id:uid, username:email, role:'user', status:'approved', industry:selectedSignupIndustry})
+  showPage('pg-auth')
+  toast('가입 완료! 이메일 인증 링크를 확인 후 로그인하세요.')
 }
 async function doResetPw(){
   const email = document.getElementById('login-email').value.trim()
@@ -729,7 +729,7 @@ async function onLogin(user){
   if(!profile){
     // create profile if not exists
     const ind = selectedSignupIndustry || 'general'
-    await sb.from('sk_profiles').insert({id:user.id, username:user.email, role: user.email===ADMIN_EMAIL?'admin':'user', status: user.email===ADMIN_EMAIL?'approved':'pending', industry:ind})
+    await sb.from('sk_profiles').insert({id:user.id, username:user.email, role: user.email===ADMIN_EMAIL?'admin':'user', status:'approved', industry:ind})
     const {data:p2} = await sb.from('sk_profiles').select('*').eq('id',user.id).single()
     currentProfile = p2
   } else { currentProfile = profile }
