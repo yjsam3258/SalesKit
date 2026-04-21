@@ -207,13 +207,39 @@ textarea{resize:none;min-height:80px}
   </div>
 </div>
 
-<!-- ========== PENDING PAGE ========== -->
-<div id="pg-pending" class="page">
-  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:32px;text-align:center">
-    <div style="font-size:64px;margin-bottom:16px">⏳</div>
-    <h2 style="margin-bottom:8px">승인 대기 중</h2>
-    <p style="color:var(--muted);margin-bottom:24px;line-height:1.6">관리자 승인 후 서비스를 이용할 수 있습니다.<br>잠시만 기다려 주세요.</p>
-    <button class="btn btn-outline" style="width:auto;padding:10px 24px" onclick="doLogout()">로그아웃</button>
+<!-- ========== SETTINGS PAGE ========== -->
+<div id="pg-settings" class="page">
+  <div class="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <h1>설정</h1>
+  </div>
+  <div class="content" style="padding-bottom:40px">
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">계정 정보</div>
+      <div class="info-row"><span class="lbl">이메일</span><span class="val" id="settings-email">-</span></div>
+      <div class="info-row"><span class="lbl">업종</span><span class="val" id="settings-industry">-</span></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">업종 변경</div>
+      <div class="industry-grid" id="settings-ind-grid">
+        <div class="ind-card" data-ind="auto" onclick="changeIndustry(this,'auto')"><div class="ind-icon">🚗</div><div class="ind-name">자동차</div></div>
+        <div class="ind-card" data-ind="insurance" onclick="changeIndustry(this,'insurance')"><div class="ind-icon">🛡️</div><div class="ind-name">보험</div></div>
+        <div class="ind-card" data-ind="pharma" onclick="changeIndustry(this,'pharma')"><div class="ind-icon">💊</div><div class="ind-name">제약</div></div>
+        <div class="ind-card" data-ind="general" onclick="changeIndustry(this,'general')"><div class="ind-icon">📋</div><div class="ind-name">범용</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">비밀번호</div>
+      <button class="btn btn-outline" onclick="doResetPwFromSettings()">비밀번호 재설정 이메일 발송</button>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <button class="btn btn-outline" onclick="doLogout()">🚪 로그아웃</button>
+    </div>
+    <div class="card" style="border:1.5px solid #fecaca">
+      <div class="section-title" style="color:var(--danger)">위험 구역</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">회원 탈퇴 시 모든 데이터(고객, 상담, 알림, 제품)가 <strong>영구 삭제</strong>됩니다.</p>
+      <button class="btn btn-danger" onclick="doWithdraw()">회원 탈퇴</button>
+    </div>
   </div>
 </div>
 
@@ -230,8 +256,8 @@ textarea{resize:none;min-height:80px}
 <div id="pg-home" class="page">
   <div class="header">
     <h1 id="home-title">💼 SalesKit</h1>
-    <button class="icon-btn" onclick="showPage('pg-admin')" id="admin-btn" style="display:none">⚙️</button>
-    <button class="icon-btn" onclick="doLogout()">🚪</button>
+    <button class="icon-btn" onclick="showPage('pg-admin')" id="admin-btn" style="display:none">🛠️</button>
+    <button class="icon-btn" onclick="showSettings()">⚙️</button>
   </div>
   <div class="content">
     <!-- stats -->
@@ -508,9 +534,8 @@ textarea{resize:none;min-height:80px}
     <h1>관리자</h1>
   </div>
   <div class="content">
-    <div class="section-title">승인 대기</div>
     <div id="pending-users"></div>
-    <div class="section-title" style="margin-top:16px">전체 회원</div>
+    <div class="section-title">전체 회원</div>
     <div id="all-users"></div>
   </div>
 </div>
@@ -707,9 +732,15 @@ async function doSignup(){
   const {data,error} = await sb.auth.signUp({email,password:pw})
   if(error){ showPage('pg-auth'); toast('가입 실패: '+error.message); return }
   const uid = data.user.id
-  await sb.from('sk_profiles').upsert({id:uid, username:email, role:'user', status:'pending', industry:selectedSignupIndustry})
-  showPage('pg-pending')
-  toast('가입 신청 완료! 관리자 승인을 기다려주세요.')
+  await sb.from('sk_profiles').upsert({id:uid, username:email, role: email===ADMIN_EMAIL?'admin':'user', status:'approved', industry:selectedSignupIndustry})
+  // 이메일 인증이 필요한 경우 안내, 아닌 경우 바로 로그인
+  if(data.user.confirmed_at || data.session) {
+    await onLogin(data.user)
+  } else {
+    showPage('pg-auth',false)
+    switchAuthTab('login')
+    toast('가입 완료! 이메일 인증 후 로그인하세요.')
+  }
 }
 async function doResetPw(){
   const email = document.getElementById('login-email').value.trim()
@@ -729,16 +760,13 @@ async function onLogin(user){
   if(!profile){
     // create profile if not exists
     const ind = selectedSignupIndustry || 'general'
-    await sb.from('sk_profiles').insert({id:user.id, username:user.email, role: user.email===ADMIN_EMAIL?'admin':'user', status: user.email===ADMIN_EMAIL?'approved':'pending', industry:ind})
+    await sb.from('sk_profiles').insert({id:user.id, username:user.email, role: user.email===ADMIN_EMAIL?'admin':'user', status:'approved', industry:ind})
     const {data:p2} = await sb.from('sk_profiles').select('*').eq('id',user.id).single()
     currentProfile = p2
   } else { currentProfile = profile }
 
-  if(currentProfile.status === 'pending'){
-    showPage('pg-pending',false); return
-  }
-  if(currentProfile.status === 'rejected'){
-    toast('계정이 거절되었습니다'); await doLogout(); return
+  if(currentProfile.status === 'blocked'){
+    toast('계정이 차단되었습니다. 관리자에게 문의하세요.'); await doLogout(); return
   }
   currentIndustry = currentProfile.industry || 'general'
   const cfg = INDUSTRY[currentIndustry]
@@ -1428,36 +1456,80 @@ async function deleteProduct(id){
 }
 
 // ============================================================
+// SETTINGS
+// ============================================================
+function showSettings(){
+  if(!currentProfile) return
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  document.getElementById('settings-email').textContent = currentUser.email||'-'
+  document.getElementById('settings-industry').textContent = cfg.icon+' '+cfg.name
+  // highlight current industry
+  document.querySelectorAll('#settings-ind-grid .ind-card').forEach(c=>{
+    c.classList.toggle('selected', c.dataset.ind === currentIndustry)
+  })
+  showPage('pg-settings')
+}
+async function changeIndustry(el, ind){
+  document.querySelectorAll('#settings-ind-grid .ind-card').forEach(c=>c.classList.remove('selected'))
+  el.classList.add('selected')
+  currentIndustry = ind
+  await sb.from('sk_profiles').update({industry:ind}).eq('id',currentUser.id)
+  const cfg = INDUSTRY[ind]||INDUSTRY.general
+  document.getElementById('settings-industry').textContent = cfg.icon+' '+cfg.name
+  document.getElementById('home-title').textContent = cfg.icon+' SalesKit'
+  toast('업종이 변경되었습니다')
+}
+async function doResetPwFromSettings(){
+  if(!currentUser?.email) return
+  const {error} = await sb.auth.resetPasswordForEmail(currentUser.email)
+  if(error) toast('오류: '+error.message)
+  else toast('비밀번호 재설정 이메일을 발송했습니다')
+}
+async function doWithdraw(){
+  if(!confirm('정말 탈퇴하시겠습니까?\n모든 데이터가 영구 삭제됩니다.')) return
+  if(!confirm('마지막 확인: 탈퇴 시 복구가 불가능합니다.\n계속하시겠습니까?')) return
+  showPage('pg-loading')
+  document.getElementById('loading-msg').textContent = '데이터 삭제 중...'
+  const uid = currentUser.id
+  // 관련 데이터 모두 삭제
+  await Promise.all([
+    sb.from('sk_reminders').delete().eq('user_id', uid),
+    sb.from('sk_consultations').delete().eq('user_id', uid),
+    sb.from('sk_products').delete().eq('user_id', uid),
+  ])
+  await sb.from('sk_customers').delete().eq('user_id', uid)
+  await sb.from('sk_profiles').delete().eq('id', uid)
+  await sb.auth.signOut()
+  currentUser = null; currentProfile = null
+  showPage('pg-auth', false); pageHistory=[]
+  toast('탈퇴가 완료되었습니다.')
+}
+
+// ============================================================
 // ADMIN
 // ============================================================
 async function loadAdminPage(){
-  const {data:pending} = await sb.from('sk_profiles').select('*').eq('status','pending')
-  const el = document.getElementById('pending-users')
-  if(!pending||pending.length===0) el.innerHTML='<p style="color:var(--muted);font-size:14px">대기중인 가입자 없음</p>'
-  else el.innerHTML = pending.map(u=>`
-    <div class="approve-item">
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:600">${esc(u.username)}</div>
-        <div style="font-size:12px;color:var(--muted)">${esc(INDUSTRY[u.industry]?.name||u.industry)} · ${fmtDate(u.created_at)}</div>
-      </div>
-      <button onclick="approveUser('${u.id}','approved')" class="btn btn-sm btn-primary" style="margin-right:6px">승인</button>
-      <button onclick="approveUser('${u.id}','rejected')" class="btn btn-sm btn-danger">거절</button>
-    </div>`).join('')
-
   const {data:all} = await sb.from('sk_profiles').select('*').order('created_at',{ascending:false})
+  const el = document.getElementById('pending-users')
+  el.innerHTML = '' // 승인 대기 없음
+
   const allEl = document.getElementById('all-users')
   allEl.innerHTML = (all||[]).map(u=>`
     <div class="approve-item">
       <div style="flex:1">
         <div style="font-size:14px;font-weight:600">${esc(u.username)}</div>
-        <div style="font-size:12px;color:var(--muted)">${esc(INDUSTRY[u.industry]?.name||u.industry)} · ${u.role} · <span style="color:${u.status==='approved'?'var(--success)':u.status==='rejected'?'var(--danger)':'var(--accent)'}">${u.status}</span></div>
+        <div style="font-size:12px;color:var(--muted)">${esc(INDUSTRY[u.industry]?.name||u.industry||'-')} · <span style="color:${u.status==='blocked'?'var(--danger)':'var(--success)'}">${u.status==='blocked'?'차단':'정상'}</span></div>
       </div>
-      ${u.status!=='rejected'?`<button onclick="approveUser('${u.id}','rejected')" class="btn btn-sm" style="background:#fef2f2;color:var(--danger);border:1px solid #fecaca">차단</button>`:'<button onclick="approveUser(\''+u.id+'\',\'approved\')" class="btn btn-sm btn-outline">복구</button>'}
+      ${u.username!==ADMIN_EMAIL
+        ? u.status==='blocked'
+          ? `<button onclick="setUserStatus('${u.id}','approved')" class="btn btn-sm btn-outline">차단 해제</button>`
+          : `<button onclick="setUserStatus('${u.id}','blocked')" class="btn btn-sm" style="background:#fef2f2;color:var(--danger);border:1px solid #fecaca">차단</button>`
+        : '<span style="font-size:12px;color:var(--muted)">관리자</span>'}
     </div>`).join('')
 }
-async function approveUser(id, status){
+async function setUserStatus(id, status){
   await sb.from('sk_profiles').update({status}).eq('id',id)
-  toast(status==='approved'?'승인되었습니다':'거절되었습니다')
+  toast(status==='blocked'?'차단되었습니다':'차단이 해제되었습니다')
   loadAdminPage()
 }
 
