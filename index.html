@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>SalesKit</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+:root{
+  --primary:#2563eb;--primary-dark:#1d4ed8;--accent:#f59e0b;
+  --bg:#f8fafc;--card:#fff;--border:#e2e8f0;
+  --text:#1e293b;--muted:#64748b;--danger:#ef4444;--success:#22c55e;
+  --nav-h:60px;--header-h:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100dvh;position:relative;overflow-x:hidden}
+/* PAGES */
+.page{display:none;flex-direction:column;min-height:100dvh}
+.page.active{display:flex}
+/* HEADER */
+.header{height:var(--header-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.header h1{font-size:17px;font-weight:700;flex:1}
+.header .back-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px;color:var(--text)}
+.header .icon-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px;color:var(--muted)}
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:16px;padding-bottom:calc(var(--nav-h) + 16px)}
+.content.no-pad{padding:0;padding-bottom:var(--nav-h)}
+/* BOTTOM NAV */
+.bottom-nav{height:var(--nav-h);background:var(--card);border-top:1px solid var(--border);display:flex;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:200}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;cursor:pointer;color:var(--muted);font-size:10px;position:relative;padding:4px 0}
+.nav-item.active{color:var(--primary)}
+.nav-item .nav-icon{font-size:22px;line-height:1}
+.nav-item .badge{position:absolute;top:4px;right:calc(50% - 16px);background:var(--danger);color:#fff;border-radius:10px;min-width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.nav-fab{flex:1;display:flex;align-items:center;justify-content:center}
+.nav-fab button{width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,.4);display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+/* CARDS */
+.card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:12px}
+.card-row{display:flex;align-items:center;gap:12px}
+/* FORMS */
+label{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px;display:block}
+input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;color:var(--text);background:#fff;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+textarea{resize:none;min-height:80px}
+.form-group{margin-bottom:14px}
+.btn{width:100%;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:7px 14px;font-size:13px;width:auto;border-radius:7px}
+/* TAGS */
+.tag{display:inline-block;padding:3px 8px;border-radius:5px;font-size:12px;font-weight:600;margin:2px}
+.tag-high{background:#fef3c7;color:#92400e}
+.tag-mid{background:#dbeafe;color:#1e40af}
+.tag-low{background:#f1f5f9;color:#475569}
+.tag-item{background:#ede9fe;color:#5b21b6}
+/* POTENTIAL BADGES */
+.pot-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:12px;font-weight:700}
+.pot-high{background:#fef9c3;color:#854d0e}
+.pot-mid{background:#dbeafe;color:#1e40af}
+.pot-low{background:#f1f5f9;color:#64748b}
+/* LIST ITEMS */
+.list-item{background:var(--card);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.list-item:active{background:#f8fafc}
+.list-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.list-body{flex:1;min-width:0}
+.list-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:12px 0}
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .icon{font-size:48px;margin-bottom:12px}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:480px;margin:0 auto;max-height:90dvh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px}
+/* TOAST */
+#toast{position:fixed;bottom:calc(var(--nav-h)+16px);left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:500;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+/* AUTH PAGE */
+.auth-hero{background:linear-gradient(135deg,var(--primary) 0%,#7c3aed 100%);color:#fff;padding:60px 24px 40px;text-align:center}
+.auth-hero .logo{font-size:48px;margin-bottom:12px}
+.auth-hero h2{font-size:28px;font-weight:800;margin-bottom:6px}
+.auth-hero p{font-size:14px;opacity:.85}
+.auth-form{padding:24px 20px}
+.tabs{display:flex;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:20px}
+.tab-btn{flex:1;padding:8px;border:none;background:transparent;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tab-btn.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.industry-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.ind-card{border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}
+.ind-card.selected{border-color:var(--primary);background:#eff6ff}
+.ind-card .ind-icon{font-size:28px;margin-bottom:4px}
+.ind-card .ind-name{font-size:13px;font-weight:600}
+/* DASHBOARD */
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.reminder-item{background:var(--card);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border-left:4px solid var(--accent)}
+.reminder-item.done{opacity:.5;border-left-color:var(--border)}
+.reminder-item.overdue{border-left-color:var(--danger)}
+.dash-stat{flex:1;background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.dash-stat .num{font-size:28px;font-weight:800;color:var(--primary)}
+.dash-stat .lbl{font-size:12px;color:var(--muted);margin-top:2px}
+/* CONSULTATION */
+.record-btn{width:80px;height:80px;border-radius:50%;border:none;background:var(--danger);color:#fff;font-size:32px;cursor:pointer;box-shadow:0 4px 16px rgba(239,68,68,.4);transition:transform .1s}
+.record-btn:active{transform:scale(.95)}
+.record-btn.recording{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 4px 16px rgba(239,68,68,.4)}50%{box-shadow:0 4px 24px rgba(239,68,68,.7)}}
+/* CHECK ITEMS */
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check-item-btn{border:1.5px solid var(--border);background:#fff;border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:6px}
+.check-item-btn.checked{background:#eff6ff;border-color:var(--primary);color:var(--primary);font-weight:600}
+.check-item-btn::before{content:'○';color:var(--border)}
+.check-item-btn.checked::before{content:'●';color:var(--primary)}
+/* SEARCH */
+.search-bar{position:relative;margin-bottom:12px}
+.search-bar input{padding-left:38px}
+.search-bar::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px}
+/* PRODUCT CARD */
+.product-card{background:var(--card);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.product-img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+/* LOADING */
+.loading-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;gap:16px;background:var(--bg)}
+.spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ADMIN */
+.approve-item{background:var(--card);border-radius:10px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+/* MISC */
+.info-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:14px}
+.info-row .lbl{color:var(--muted);min-width:70px;font-size:13px}
+.info-row .val{flex:1;word-break:break-all}
+.section-sep{height:8px;background:var(--bg);margin:0 -16px}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ========== AUTH PAGE ========== -->
+<div id="pg-auth" class="page active">
+  <div class="auth-hero">
+    <div class="logo">💼</div>
+    <h2>SalesKit</h2>
+    <p>영업을 스마트하게</p>
+  </div>
+  <div class="auth-form">
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-login" onclick="switchAuthTab('login')">로그인</button>
+      <button class="tab-btn" id="tab-signup" onclick="switchAuthTab('signup')">회원가입</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="auth-login">
+      <div class="form-group">
+        <label>이메일</label>
+        <input type="email" id="login-email" placeholder="이메일 입력" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="login-pw" placeholder="비밀번호 입력" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">로그인</button>
+      <div style="text-align:center;margin-top:14px">
+        <button onclick="doResetPw()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer">비밀번호 재설정</button>
+      </div>
+    </div>
+    <!-- SIGNUP -->
+    <div id="auth-signup" style="display:none">
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" id="su-name" placeholder="이름 입력">
+      </div>
+      <div class="form-group">
+        <label>이메일</label>
+        <input type="email" id="su-email" placeholder="이메일 입력" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="su-pw" placeholder="6자 이상" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>업종 선택</label>
+        <div class="industry-grid">
+          <div class="ind-card selected" data-ind="auto" onclick="selectIndustry(this,'auto')">
+            <div class="ind-icon">🚗</div>
+            <div class="ind-name">자동차</div>
+          </div>
+          <div class="ind-card" data-ind="insurance" onclick="selectIndustry(this,'insurance')">
+            <div class="ind-icon">🛡️</div>
+            <div class="ind-name">보험</div>
+          </div>
+          <div class="ind-card" data-ind="pharma" onclick="selectIndustry(this,'pharma')">
+            <div class="ind-icon">💊</div>
+            <div class="ind-name">제약</div>
+          </div>
+          <div class="ind-card" data-ind="general" onclick="selectIndustry(this,'general')">
+            <div class="ind-icon">📋</div>
+            <div class="ind-name">범용</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="doSignup()">가입 신청</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PENDING PAGE ========== -->
+<div id="pg-pending" class="page">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:32px;text-align:center">
+    <div style="font-size:64px;margin-bottom:16px">⏳</div>
+    <h2 style="margin-bottom:8px">승인 대기 중</h2>
+    <p style="color:var(--muted);margin-bottom:24px;line-height:1.6">관리자 승인 후 서비스를 이용할 수 있습니다.<br>잠시만 기다려 주세요.</p>
+    <button class="btn btn-outline" style="width:auto;padding:10px 24px" onclick="doLogout()">로그아웃</button>
+  </div>
+</div>
+
+<!-- ========== LOADING PAGE ========== -->
+<div id="pg-loading" class="page">
+  <div class="loading-page">
+    <div class="spinner"></div>
+    <p id="loading-msg" style="color:var(--muted);font-size:15px">처리 중...</p>
+  </div>
+</div>
+
+<!-- ========== MAIN (with bottom nav) ========== -->
+<!-- DASHBOARD -->
+<div id="pg-home" class="page">
+  <div class="header">
+    <h1 id="home-title">💼 SalesKit</h1>
+    <button class="icon-btn" onclick="showPage('pg-admin')" id="admin-btn" style="display:none">⚙️</button>
+    <button class="icon-btn" onclick="doLogout()">🚪</button>
+  </div>
+  <div class="content">
+    <!-- stats -->
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div class="dash-stat"><div class="num" id="stat-customers">-</div><div class="lbl">전체 고객</div></div>
+      <div class="dash-stat"><div class="num" id="stat-today">-</div><div class="lbl">오늘 상담</div></div>
+      <div class="dash-stat"><div class="num" id="stat-reminders">-</div><div class="lbl">미완료 알림</div></div>
+    </div>
+    <!-- today reminders -->
+    <div class="section-title">⏰ 오늘의 알림</div>
+    <div id="dash-reminders"><div class="empty"><div class="icon">✅</div><p>오늘 예정된 알림이 없습니다</p></div></div>
+    <!-- hot customers -->
+    <div class="section-title" style="margin-top:16px">🔥 관심 고객</div>
+    <div id="dash-hot"><div class="empty"><div class="icon">👥</div><p>등록된 고객이 없습니다</p></div></div>
+  </div>
+  <nav class="bottom-nav" id="main-nav">
+    <button class="nav-item active" data-nav="pg-home" onclick="navTo('pg-home',this)">
+      <span class="nav-icon">🏠</span><span>홈</span>
+    </button>
+    <button class="nav-item" data-nav="pg-customers" onclick="navTo('pg-customers',this)">
+      <span class="nav-icon">👥</span><span>고객</span>
+    </button>
+    <div class="nav-fab"><button onclick="showPage('pg-add-customer')">＋</button></div>
+    <button class="nav-item" data-nav="pg-reminders" onclick="navTo('pg-reminders',this)" id="nav-rem-btn">
+      <span class="nav-icon">🔔</span><span>알림</span>
+      <span class="badge" id="rem-badge" style="display:none"></span>
+    </button>
+    <button class="nav-item" data-nav="pg-products" onclick="navTo('pg-products',this)">
+      <span class="nav-icon">📦</span><span>제품</span>
+    </button>
+  </nav>
+</div>
+
+<!-- CUSTOMER LIST -->
+<div id="pg-customers" class="page">
+  <div class="header">
+    <h1>고객 목록</h1>
+  </div>
+  <div class="content">
+    <div class="search-bar"><input type="search" id="cust-search" placeholder="이름, 회사, 전화번호 검색" oninput="filterCustomers()"></div>
+    <div id="sort-row" style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-sm btn-outline" id="sort-recent" onclick="sortCustomers('recent')" style="flex:1">최근상담순</button>
+      <button class="btn btn-sm btn-outline" id="sort-high" onclick="sortCustomers('high')" style="flex:1">관심도순</button>
+      <button class="btn btn-sm btn-outline" id="sort-name" onclick="sortCustomers('name')" style="flex:1">이름순</button>
+    </div>
+    <div id="cust-list"></div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="navTo('pg-home',null)"><span class="nav-icon">🏠</span><span>홈</span></button>
+    <button class="nav-item active"><span class="nav-icon">👥</span><span>고객</span></button>
+    <div class="nav-fab"><button onclick="showPage('pg-add-customer')">＋</button></div>
+    <button class="nav-item" onclick="navTo('pg-reminders',null)"><span class="nav-icon">🔔</span><span>알림</span><span class="badge" id="rem-badge2" style="display:none"></span></button>
+    <button class="nav-item" onclick="navTo('pg-products',null)"><span class="nav-icon">📦</span><span>제품</span></button>
+  </nav>
+</div>
+
+<!-- ADD/EDIT CUSTOMER -->
+<div id="pg-add-customer" class="page">
+  <div class="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <h1 id="add-cust-title">신규 고객</h1>
+  </div>
+  <div class="content" style="padding-bottom:80px">
+    <!-- OCR section -->
+    <div class="card" style="text-align:center;margin-bottom:16px">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">명함 사진으로 자동 입력</p>
+      <input type="file" id="card-file" accept="image/*" style="display:none" onchange="processCard(event)">
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('card-file').click()">📷 명함 촬영/업로드</button>
+      <div id="card-preview" style="margin-top:10px;display:none">
+        <img id="card-img" style="max-width:100%;border-radius:8px;max-height:160px;object-fit:cover">
+        <p id="card-status" style="font-size:12px;color:var(--muted);margin-top:6px">인식 중...</p>
+      </div>
+    </div>
+    <input type="hidden" id="edit-cust-id">
+    <div class="form-group"><label>이름 *</label><input type="text" id="cust-name" placeholder="고객 이름"></div>
+    <div class="form-group"><label>회사명</label><input type="text" id="cust-company" placeholder="회사명"></div>
+    <div class="form-group"><label>직함</label><input type="text" id="cust-title" placeholder="직함/부서"></div>
+    <div class="form-group"><label>휴대폰</label><input type="tel" id="cust-phone" placeholder="010-0000-0000"></div>
+    <div class="form-group"><label>이메일</label><input type="email" id="cust-email" placeholder="이메일"></div>
+    <div class="form-group"><label>생년월일</label><input type="date" id="cust-birthday"></div>
+    <div class="form-group"><label>주소</label><input type="text" id="cust-address" placeholder="주소"></div>
+    <div class="form-group">
+      <label>관심도</label>
+      <select id="cust-potential">
+        <option value="높음">🔥 높음</option>
+        <option value="보통" selected>⭐ 보통</option>
+        <option value="낮음">❄️ 낮음</option>
+      </select>
+    </div>
+    <!-- Industry-specific extra fields -->
+    <div id="extra-fields"></div>
+    <div class="form-group"><label>메모</label><textarea id="cust-memo" placeholder="추가 메모"></textarea></div>
+    <button class="btn btn-primary" onclick="saveCustomer()">저장</button>
+  </div>
+</div>
+
+<!-- CUSTOMER DETAIL -->
+<div id="pg-cust-detail" class="page">
+  <div class="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <h1 id="detail-name">고객 상세</h1>
+    <button class="icon-btn" onclick="editCurrentCustomer()">✏️</button>
+    <button class="icon-btn" onclick="deleteCurrentCustomer()">🗑️</button>
+  </div>
+  <div class="content no-pad" style="padding-bottom:var(--nav-h)">
+    <!-- info -->
+    <div style="padding:16px" id="detail-info"></div>
+    <div class="section-sep"></div>
+    <!-- action buttons -->
+    <div style="padding:12px 16px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" style="flex:1" onclick="startConsultation()">📝 상담 등록</button>
+      <button class="btn btn-outline btn-sm" style="flex:1" onclick="addReminder()">🔔 알림 추가</button>
+    </div>
+    <div class="section-sep"></div>
+    <!-- consultations -->
+    <div style="padding:16px">
+      <div class="section-title">상담 기록</div>
+      <div id="detail-consults"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONSULTATION ENTRY -->
+<div id="pg-consult" class="page">
+  <div class="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <h1 id="consult-title">상담 등록</h1>
+  </div>
+  <div class="content" style="padding-bottom:80px">
+    <div id="consult-cust-info" class="card" style="margin-bottom:16px"></div>
+    <!-- mode tabs -->
+    <div class="tabs" style="margin-bottom:16px">
+      <button class="tab-btn active" id="tab-record" onclick="switchConsultTab('record')">🎙️ 음성</button>
+      <button class="tab-btn" id="tab-upload" onclick="switchConsultTab('upload')">📁 파일업로드</button>
+      <button class="tab-btn" id="tab-memo" onclick="switchConsultTab('memo')">✏️ 메모</button>
+    </div>
+    <!-- record mode -->
+    <div id="mode-record" style="text-align:center;padding:24px 0">
+      <div style="margin-bottom:12px;font-size:14px;color:var(--muted)" id="rec-status">버튼을 눌러 녹음 시작</div>
+      <button class="record-btn" id="rec-btn" onclick="toggleRecord()">🎙️</button>
+      <div id="rec-timer" style="margin-top:12px;font-size:20px;font-weight:700;color:var(--primary);display:none">00:00</div>
+    </div>
+    <!-- upload mode -->
+    <div id="mode-upload" style="display:none">
+      <input type="file" id="audio-file" accept="audio/*,video/*" style="display:none" onchange="handleAudioFile(event)">
+      <div style="text-align:center;padding:24px">
+        <button class="btn btn-outline" onclick="document.getElementById('audio-file').click()">📁 음성 파일 선택</button>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">MP3, M4A, WAV, OGG, 3GP 지원</p>
+        <p id="upload-file-name" style="font-size:13px;margin-top:8px;font-weight:600"></p>
+      </div>
+    </div>
+    <!-- memo mode -->
+    <div id="mode-memo" style="display:none">
+      <div class="form-group">
+        <label>상담 메모 (50자 이내)</label>
+        <textarea id="memo-text" maxlength="50" placeholder="상담 내용 요약 입력" style="min-height:120px"></textarea>
+        <div style="text-align:right;font-size:12px;color:var(--muted);margin-top:4px"><span id="memo-count">0</span>/50</div>
+      </div>
+    </div>
+    <!-- check items -->
+    <div class="form-group">
+      <label>체크 항목</label>
+      <div class="check-grid" id="check-items-grid"></div>
+    </div>
+    <!-- commission memo -->
+    <div class="form-group" id="commission-group" style="display:none">
+      <label>수수료 메모</label>
+      <input type="text" id="commission-memo" placeholder="예: 20%">
+    </div>
+    <!-- products -->
+    <div class="form-group">
+      <label>연결 제품</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input type="text" id="prod-search-input" placeholder="제품 검색..." style="flex:1" oninput="searchProducts()">
+      </div>
+      <div id="prod-search-results" style="margin-bottom:8px"></div>
+      <div id="selected-products"></div>
+    </div>
+    <button class="btn btn-primary" onclick="submitConsultation()">AI 요약 생성</button>
+  </div>
+</div>
+
+<!-- AI LOADING -->
+<div id="pg-ai-loading" class="page">
+  <div class="loading-page">
+    <div style="font-size:48px;margin-bottom:8px">🤖</div>
+    <div class="spinner"></div>
+    <p id="ai-loading-msg" style="color:var(--muted);font-size:15px;margin-top:12px">AI 분석 중...</p>
+    <p style="color:var(--muted);font-size:12px;margin-top:4px">잠시만 기다려 주세요</p>
+  </div>
+</div>
+
+<!-- CONSULTATION RESULT -->
+<div id="pg-consult-result" class="page">
+  <div class="header">
+    <button class="back-btn" onclick="finishConsultation()">✓</button>
+    <h1>상담 결과</h1>
+    <button class="icon-btn" onclick="saveConsultResult()">💾</button>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="section-title">핵심 요약</div>
+      <p id="result-summary" style="font-size:14px;line-height:1.6"></p>
+    </div>
+    <div class="card">
+      <div class="section-title">요청/확인 사항</div>
+      <p id="result-requests" style="font-size:14px;line-height:1.6"></p>
+    </div>
+    <div class="card">
+      <div class="section-title">체크 항목</div>
+      <div id="result-checks"></div>
+    </div>
+    <div class="card" id="result-products-card" style="display:none">
+      <div class="section-title">연결 제품</div>
+      <div id="result-products"></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>전체 내용</span>
+        <button onclick="toggleTranscript()" style="background:none;border:none;font-size:12px;color:var(--primary);cursor:pointer" id="transcript-toggle">펼치기</button>
+      </div>
+      <div id="result-transcript" style="display:none;font-size:13px;line-height:1.6;white-space:pre-wrap;color:var(--muted)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REMINDERS -->
+<div id="pg-reminders" class="page">
+  <div class="header">
+    <h1>알림 관리</h1>
+    <button class="icon-btn" onclick="addReminderGlobal()">＋</button>
+  </div>
+  <div class="content">
+    <div class="tabs" style="margin-bottom:16px">
+      <button class="tab-btn active" id="tab-rem-pending" onclick="switchRemTab('pending')">예정</button>
+      <button class="tab-btn" id="tab-rem-done" onclick="switchRemTab('done')">완료</button>
+    </div>
+    <div id="rem-list"></div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="navTo('pg-home',null)"><span class="nav-icon">🏠</span><span>홈</span></button>
+    <button class="nav-item" onclick="navTo('pg-customers',null)"><span class="nav-icon">👥</span><span>고객</span></button>
+    <div class="nav-fab"><button onclick="showPage('pg-add-customer')">＋</button></div>
+    <button class="nav-item active"><span class="nav-icon">🔔</span><span>알림</span><span class="badge" id="rem-badge3" style="display:none"></span></button>
+    <button class="nav-item" onclick="navTo('pg-products',null)"><span class="nav-icon">📦</span><span>제품</span></button>
+  </nav>
+</div>
+
+<!-- PRODUCTS -->
+<div id="pg-products" class="page">
+  <div class="header">
+    <h1>제품 DB</h1>
+    <button class="icon-btn" onclick="showAddProduct()">＋</button>
+  </div>
+  <div class="content">
+    <div class="search-bar"><input type="search" id="prod-filter" placeholder="제품명, 코드 검색" oninput="filterProducts()"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px" id="category-filter"></div>
+    <div id="prod-list"></div>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="loadMoreProducts()">더 보기</button>
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="navTo('pg-home',null)"><span class="nav-icon">🏠</span><span>홈</span></button>
+    <button class="nav-item" onclick="navTo('pg-customers',null)"><span class="nav-icon">👥</span><span>고객</span></button>
+    <div class="nav-fab"><button onclick="showPage('pg-add-customer')">＋</button></div>
+    <button class="nav-item" onclick="navTo('pg-reminders',null)"><span class="nav-icon">🔔</span><span>알림</span></button>
+    <button class="nav-item active"><span class="nav-icon">📦</span><span>제품</span></button>
+  </nav>
+</div>
+
+<!-- ADMIN -->
+<div id="pg-admin" class="page">
+  <div class="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <h1>관리자</h1>
+  </div>
+  <div class="content">
+    <div class="section-title">승인 대기</div>
+    <div id="pending-users"></div>
+    <div class="section-title" style="margin-top:16px">전체 회원</div>
+    <div id="all-users"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<!-- Reminder Modal -->
+<div class="modal-bg" id="rem-modal">
+  <div class="modal">
+    <div class="modal-title">알림 추가</div>
+    <input type="hidden" id="rem-cust-id">
+    <div class="form-group"><label>알림 종류</label><select id="rem-type"></select></div>
+    <div class="form-group"><label>제목</label><input type="text" id="rem-title" placeholder="알림 제목"></div>
+    <div class="form-group"><label>날짜</label><input type="date" id="rem-date"></div>
+    <div class="form-group"><label>메모</label><textarea id="rem-note" placeholder="추가 메모" style="min-height:60px"></textarea></div>
+    <button class="btn btn-primary" onclick="saveReminder()">저장</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="closeModal('rem-modal')">취소</button>
+  </div>
+</div>
+<!-- Add Product Modal -->
+<div class="modal-bg" id="prod-modal">
+  <div class="modal">
+    <div class="modal-title" id="prod-modal-title">제품 추가</div>
+    <input type="hidden" id="prod-id">
+    <div class="form-group"><label>제품명 *</label><input type="text" id="prod-name" placeholder="제품명"></div>
+    <div class="form-group"><label>코드/식별번호</label><input type="text" id="prod-code" placeholder="코드"></div>
+    <div class="form-group"><label>카테고리</label><input type="text" id="prod-category" placeholder="카테고리"></div>
+    <div class="form-group"><label>가격</label><input type="number" id="prod-price" placeholder="단가 (원)"></div>
+    <div class="form-group"><label>추가 사양 (JSON)</label><textarea id="prod-specs" placeholder='{"색상":"흰색","사이즈":"M"}' style="min-height:60px;font-size:12px;font-family:monospace"></textarea></div>
+    <button class="btn btn-primary" onclick="saveProduct()">저장</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="closeModal('prod-modal')">취소</button>
+  </div>
+</div>
+<!-- Consult Detail Modal -->
+<div class="modal-bg" id="consult-detail-modal">
+  <div class="modal">
+    <div class="modal-title">상담 상세</div>
+    <div id="consult-detail-body"></div>
+    <button class="btn btn-danger btn-sm" style="margin-top:12px" onclick="deleteConsultation()">삭제</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="closeModal('consult-detail-modal')">닫기</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const SB_URL = 'https://qfuwfuownejwbkjhyihi.supabase.co'
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmdXdmdW93bmVqd2Jramh5aWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTM0MzcsImV4cCI6MjA5MDcyOTQzN30.kYWCnQyuFV1EyrzBIc2-xZLlFBRvT0zm2uYu2JZS2SU'
+const EDGE = SB_URL + '/functions/v1'
+const ADMIN_EMAIL = 'yjsam3258@naver.com'
+
+const sb = supabase.createClient(SB_URL, SB_KEY)
+
+// ============================================================
+// INDUSTRY CONFIG
+// ============================================================
+const INDUSTRY = {
+  auto: {
+    name: '자동차', icon: '🚗',
+    checkItems: ['시승완료','견적발송','할부/리스상담','계약서작성','출고완료'],
+    remType: ['시승 예약','계약 만기','보험 갱신','생일','팔로업'],
+    extraFields: [
+      {key:'current_car', label:'현재 차량'},
+      {key:'insurance_expiry', label:'보험 만기', type:'date'},
+      {key:'purchase_date', label:'구매 예정일', type:'date'}
+    ]
+  },
+  insurance: {
+    name: '보험', icon: '🛡️',
+    checkItems: ['설계서발송','청약서작성','심사완료','증권발행','유지관리'],
+    remType: ['갱신 알림','만기 알림','생일','납입일','팔로업'],
+    extraFields: [
+      {key:'insurer', label:'현재 보험사'},
+      {key:'policy_expiry', label:'보험 만기', type:'date'},
+      {key:'premium', label:'월납입금'}
+    ]
+  },
+  pharma: {
+    name: '제약', icon: '💊',
+    checkItems: ['샘플제공','디테일링완료','처방확인','학회지원','계약완료'],
+    remType: ['방문 주기','학회 일정','처방 리뷰','생일','팔로업'],
+    extraFields: [
+      {key:'hospital', label:'병원명'},
+      {key:'dept', label:'진료과'},
+      {key:'visit_cycle', label:'방문주기(일)'}
+    ]
+  },
+  general: {
+    name: '범용', icon: '📋',
+    checkItems: ['견적서발송','카탈로그전달','계약검토','주문완료','납품완료'],
+    remType: ['팔로업','계약 갱신','생일','미팅','기타'],
+    extraFields: []
+  }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser = null
+let currentProfile = null
+let currentIndustry = 'auto'
+let selectedSignupIndustry = 'auto'
+let currentCustomerId = null
+let currentCustomer = null
+let consultData = {} // {customerId, audioBlob, audioFile, memo, checkItems, commissionMemo, productIds}
+let pendingConsultResult = null
+let editingProductId = null
+let remTabState = 'pending'
+let prodPage = 0
+const PROD_PAGE_SIZE = 20
+let allCustomers = []
+let customerSortMode = 'recent'
+let selectedProductIds = []
+let mediaRecorder = null
+let audioChunks = []
+let recordTimer = null
+let recordSeconds = 0
+let pageHistory = []
+
+// ============================================================
+// UTILS
+// ============================================================
+function esc(s){ return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '' }
+function toast(msg, dur=2500){
+  const t = document.getElementById('toast')
+  t.textContent = msg; t.classList.add('show')
+  setTimeout(()=>t.classList.remove('show'), dur)
+}
+function fmtDate(d){ return d ? new Date(d).toLocaleDateString('ko',{month:'short',day:'numeric'}) : '' }
+function fmtDateTime(d){ return d ? new Date(d).toLocaleString('ko',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '' }
+function potLabel(p){ return p==='높음'?'🔥 높음':p==='보통'?'⭐ 보통':'❄️ 낮음' }
+function potClass(p){ return p==='높음'?'pot-high':p==='보통'?'pot-mid':'pot-low' }
+
+function showPage(id, pushHistory=true){
+  if(pushHistory && id !== 'pg-auth') pageHistory.push(id)
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
+  const el = document.getElementById(id)
+  if(el) el.classList.add('active')
+  window.scrollTo(0,0)
+}
+function goBack(){
+  pageHistory.pop()
+  const prev = pageHistory[pageHistory.length-1]
+  if(prev) showPage(prev, false)
+  else goHome()
+}
+function goHome(){ pageHistory=['pg-home']; showPage('pg-home',false); loadDashboard() }
+function navTo(pgId, btn){
+  showPage(pgId, false)
+  pageHistory = [pgId]
+  if(pgId==='pg-customers') loadCustomers()
+  if(pgId==='pg-reminders') loadReminders()
+  if(pgId==='pg-products') loadProducts()
+  if(pgId==='pg-home') loadDashboard()
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function openModal(id){ document.getElementById(id).classList.add('open') }
+
+// click outside modal closes it
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click', e=>{ if(e.target===bg) bg.classList.remove('open') })
+})
+
+// ============================================================
+// AUTH
+// ============================================================
+function switchAuthTab(t){
+  document.getElementById('auth-login').style.display = t==='login'?'block':'none'
+  document.getElementById('auth-signup').style.display = t==='signup'?'block':'none'
+  document.getElementById('tab-login').classList.toggle('active', t==='login')
+  document.getElementById('tab-signup').classList.toggle('active', t==='signup')
+}
+function selectIndustry(el, ind){
+  document.querySelectorAll('.ind-card').forEach(c=>c.classList.remove('selected'))
+  el.classList.add('selected'); selectedSignupIndustry = ind
+}
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim()
+  const pw = document.getElementById('login-pw').value
+  if(!email||!pw){toast('이메일과 비밀번호를 입력하세요'); return}
+  showPage('pg-loading')
+  const {data,error} = await sb.auth.signInWithPassword({email,password:pw})
+  if(error){ showPage('pg-auth'); toast('로그인 실패: '+error.message); return }
+  await onLogin(data.user)
+}
+async function doSignup(){
+  const name = document.getElementById('su-name').value.trim()
+  const email = document.getElementById('su-email').value.trim()
+  const pw = document.getElementById('su-pw').value
+  if(!name||!email||!pw){toast('모든 항목을 입력하세요'); return}
+  if(pw.length<6){toast('비밀번호는 6자 이상'); return}
+  showPage('pg-loading')
+  const {data,error} = await sb.auth.signUp({email,password:pw})
+  if(error){ showPage('pg-auth'); toast('가입 실패: '+error.message); return }
+  const uid = data.user.id
+  await sb.from('sk_profiles').upsert({id:uid, username:email, role:'user', status:'pending', industry:selectedSignupIndustry})
+  showPage('pg-pending')
+  toast('가입 신청 완료! 관리자 승인을 기다려주세요.')
+}
+async function doResetPw(){
+  const email = document.getElementById('login-email').value.trim()
+  if(!email){toast('이메일을 먼저 입력하세요'); return}
+  const {error} = await sb.auth.resetPasswordForEmail(email)
+  if(error) toast('오류: '+error.message)
+  else toast('비밀번호 재설정 이메일을 발송했습니다')
+}
+async function doLogout(){
+  await sb.auth.signOut()
+  currentUser = null; currentProfile = null
+  showPage('pg-auth',false); pageHistory=[]
+}
+async function onLogin(user){
+  currentUser = user
+  const {data:profile} = await sb.from('sk_profiles').select('*').eq('id',user.id).single()
+  if(!profile){
+    // create profile if not exists
+    const ind = selectedSignupIndustry || 'general'
+    await sb.from('sk_profiles').insert({id:user.id, username:user.email, role: user.email===ADMIN_EMAIL?'admin':'user', status: user.email===ADMIN_EMAIL?'approved':'pending', industry:ind})
+    const {data:p2} = await sb.from('sk_profiles').select('*').eq('id',user.id).single()
+    currentProfile = p2
+  } else { currentProfile = profile }
+
+  if(currentProfile.status === 'pending'){
+    showPage('pg-pending',false); return
+  }
+  if(currentProfile.status === 'rejected'){
+    toast('계정이 거절되었습니다'); await doLogout(); return
+  }
+  currentIndustry = currentProfile.industry || 'general'
+  const cfg = INDUSTRY[currentIndustry]
+  document.getElementById('home-title').textContent = cfg.icon + ' SalesKit'
+  if(user.email === ADMIN_EMAIL) document.getElementById('admin-btn').style.display='block'
+  pageHistory = ['pg-home']
+  showPage('pg-home',false)
+  loadDashboard()
+  loadReminderBadge()
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboard(){
+  if(!currentUser) return
+  // stats
+  const [custR, todayR, remR] = await Promise.all([
+    sb.from('sk_customers').select('id',{count:'exact',head:true}).eq('user_id',currentUser.id),
+    sb.from('sk_consultations').select('id',{count:'exact',head:true}).eq('user_id',currentUser.id).gte('created_at', new Date().toISOString().slice(0,10)),
+    sb.from('sk_reminders').select('id',{count:'exact',head:true}).eq('user_id',currentUser.id).eq('is_done',false)
+  ])
+  document.getElementById('stat-customers').textContent = custR.count||0
+  document.getElementById('stat-today').textContent = todayR.count||0
+  document.getElementById('stat-reminders').textContent = remR.count||0
+
+  // today reminders
+  const today = new Date().toISOString().slice(0,10)
+  const {data:rems} = await sb.from('sk_reminders')
+    .select('*,sk_customers(name)')
+    .eq('user_id',currentUser.id).eq('is_done',false)
+    .lte('due_date', today).order('due_date')
+  const remEl = document.getElementById('dash-reminders')
+  if(!rems||rems.length===0){ remEl.innerHTML='<div class="empty"><div class="icon">✅</div><p>오늘 예정된 알림 없음</p></div>'; }
+  else remEl.innerHTML = rems.slice(0,5).map(r=>{
+    const isOd = r.due_date < today
+    return `<div class="reminder-item${isOd?' overdue':''}" onclick="openCustomerById('${r.customer_id}')">
+      <span style="font-size:20px">${reminderIcon(r.type)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600">${esc(r.title)}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(r.sk_customers?.name)} · ${fmtDate(r.due_date)}</div>
+      </div>
+      <button onclick="event.stopPropagation();doneReminder('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:18px">✅</button>
+    </div>`
+  }).join('')
+
+  // hot customers
+  const {data:hots} = await sb.from('sk_customers')
+    .select('*').eq('user_id',currentUser.id).eq('potential','높음')
+    .order('last_contacted_at',{ascending:false}).limit(4)
+  const hotEl = document.getElementById('dash-hot')
+  if(!hots||hots.length===0) hotEl.innerHTML='<div class="empty"><div class="icon">👥</div><p>관심도 높음인 고객이 없습니다</p></div>'
+  else hotEl.innerHTML = hots.map(c=>customerListItem(c)).join('')
+}
+function reminderIcon(type){
+  const map={
+    '시승 예약':'🚗','계약 만기':'📋','보험 갱신':'🔄','생일':'🎂','팔로업':'📞',
+    '갱신 알림':'🔔','만기 알림':'⚠️','납입일':'💰','학회 일정':'📚','방문 주기':'🏥',
+    '처방 리뷰':'💊','계약 갱신':'📋','미팅':'🤝','기타':'📌'
+  }
+  return map[type]||'🔔'
+}
+
+// ============================================================
+// CUSTOMERS
+// ============================================================
+function customerListItem(c){
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  const initials = (c.name||'?').slice(0,1)
+  const bgColors = ['#dbeafe','#fce7f3','#d1fae5','#fef3c7','#ede9fe']
+  const bg = bgColors[(c.name||'').charCodeAt(0)%bgColors.length]
+  return `<div class="list-item" onclick="openCustomerById('${c.id}')">
+    <div class="list-avatar" style="background:${bg}">${esc(initials)}</div>
+    <div class="list-body">
+      <div class="list-name">${esc(c.name)} ${c.company?'<span style="font-size:12px;color:var(--muted)">· '+esc(c.company)+'</span>':''}</div>
+      <div class="list-sub">${esc(c.phone||'')} ${c.last_contacted_at?'· 최근 '+fmtDate(c.last_contacted_at):''}</div>
+    </div>
+    <span class="pot-badge ${potClass(c.potential)}">${potLabel(c.potential)}</span>
+  </div>`
+}
+async function loadCustomers(){
+  const {data} = await sb.from('sk_customers').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false})
+  allCustomers = data||[]
+  renderCustomers()
+}
+function renderCustomers(){
+  let list = [...allCustomers]
+  const q = document.getElementById('cust-search').value.toLowerCase()
+  if(q) list = list.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.company||'').toLowerCase().includes(q)||(c.phone||'').includes(q))
+  if(customerSortMode==='high') list.sort((a,b)=>{const o={높음:0,보통:1,낮음:2}; return (o[a.potential]||1)-(o[b.potential]||1)})
+  else if(customerSortMode==='name') list.sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'))
+  else list.sort((a,b)=>new Date(b.last_contacted_at||b.created_at)-new Date(a.last_contacted_at||a.created_at))
+  const el = document.getElementById('cust-list')
+  el.innerHTML = list.length ? list.map(customerListItem).join('') : '<div class="empty"><div class="icon">👥</div><p>고객이 없습니다</p></div>'
+}
+function filterCustomers(){ renderCustomers() }
+function sortCustomers(mode){ customerSortMode=mode; renderCustomers() }
+async function openCustomerById(id){
+  const {data:c} = await sb.from('sk_customers').select('*').eq('id',id).single()
+  if(!c) return
+  currentCustomer=c; currentCustomerId=id
+  showPage('pg-cust-detail')
+  renderCustomerDetail(c)
+  loadConsultations(id)
+}
+
+function renderCustomerDetail(c){
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  document.getElementById('detail-name').textContent = c.name||'고객 상세'
+  const extra = c.extra||{}
+  const extraHtml = cfg.extraFields.map(f=>`
+    <div class="info-row"><span class="lbl">${esc(f.label)}</span><span class="val">${esc(extra[f.key]||'-')}</span></div>`).join('')
+  document.getElementById('detail-info').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:56px;height:56px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0">${esc((c.name||'?').slice(0,1))}</div>
+      <div><div style="font-size:20px;font-weight:700">${esc(c.name)}</div>
+      <span class="pot-badge ${potClass(c.potential)}">${potLabel(c.potential)}</span></div>
+    </div>
+    ${c.company?`<div class="info-row"><span class="lbl">회사</span><span class="val">${esc(c.company)}</span></div>`:''}
+    ${c.title?`<div class="info-row"><span class="lbl">직함</span><span class="val">${esc(c.title)}</span></div>`:''}
+    ${c.phone?`<div class="info-row"><span class="lbl">휴대폰</span><a href="tel:${esc(c.phone)}" class="val" style="color:var(--primary)">${esc(c.phone)}</a></div>`:''}
+    ${c.email?`<div class="info-row"><span class="lbl">이메일</span><a href="mailto:${esc(c.email)}" class="val" style="color:var(--primary)">${esc(c.email)}</a></div>`:''}
+    ${c.birthday?`<div class="info-row"><span class="lbl">생년월일</span><span class="val">${esc(c.birthday)}</span></div>`:''}
+    ${c.address?`<div class="info-row"><span class="lbl">주소</span><span class="val">${esc(c.address)}</span></div>`:''}
+    ${extraHtml}
+    ${c.memo?`<div class="info-row"><span class="lbl">메모</span><span class="val">${esc(c.memo)}</span></div>`:''}
+  `
+}
+
+async function loadConsultations(custId){
+  const {data} = await sb.from('sk_consultations').select('*').eq('customer_id',custId).order('created_at',{ascending:false})
+  const el = document.getElementById('detail-consults')
+  if(!data||data.length===0){ el.innerHTML='<div class="empty"><div class="icon">📝</div><p>상담 기록이 없습니다</p></div>'; return }
+  el.innerHTML = data.map(c=>`
+    <div class="card" style="cursor:pointer" onclick="showConsultDetail('${c.id}')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--muted)">${fmtDateTime(c.created_at)}</span>
+        <div>${(c.check_items||[]).slice(0,3).map(k=>`<span class="tag tag-item">${esc(k==='수수료전화'&&c.commission_memo?`수수료전화(${esc(c.commission_memo)})`:k)}</span>`).join('')}</div>
+      </div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">${esc(c.summary||c.memo||'(내용 없음)')}</div>
+      ${c.requests?`<div style="font-size:13px;color:var(--muted)">${esc(c.requests)}</div>`:''}
+    </div>`).join('')
+}
+
+let viewingConsultId = null
+async function showConsultDetail(id){
+  const {data:c} = await sb.from('sk_consultations').select('*').eq('id',id).single()
+  if(!c) return
+  viewingConsultId = id
+  document.getElementById('consult-detail-body').innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${fmtDateTime(c.created_at)}</div>
+    <div style="margin-bottom:10px"><strong>핵심 요약</strong><p style="font-size:14px;margin-top:4px">${esc(c.summary||c.memo||'-')}</p></div>
+    ${c.requests?`<div style="margin-bottom:10px"><strong>요청/확인 사항</strong><p style="font-size:14px;margin-top:4px">${esc(c.requests)}</p></div>`:''}
+    ${(c.check_items||[]).length?`<div style="margin-bottom:10px"><strong>체크 항목</strong><div style="margin-top:6px">${c.check_items.map(k=>`<span class="tag tag-item">${esc(k==='수수료전화'&&c.commission_memo?`수수료전화(${c.commission_memo})`:k)}</span>`).join('')}</div></div>`:''}
+    ${c.transcript?`<details style="margin-top:10px"><summary style="cursor:pointer;font-size:13px;color:var(--primary)">전체 내용 보기</summary><p style="font-size:12px;margin-top:8px;white-space:pre-wrap;color:var(--muted)">${esc(c.transcript)}</p></details>`:''}
+  `
+  openModal('consult-detail-modal')
+}
+async function deleteConsultation(){
+  if(!viewingConsultId) return
+  if(!confirm('이 상담 기록을 삭제하시겠습니까?')) return
+  await sb.from('sk_consultations').delete().eq('id',viewingConsultId)
+  closeModal('consult-detail-modal')
+  toast('삭제되었습니다')
+  loadConsultations(currentCustomerId)
+}
+
+// ADD/EDIT CUSTOMER
+function showAddCustomer(){
+  document.getElementById('add-cust-title').textContent='신규 고객'
+  document.getElementById('edit-cust-id').value=''
+  ;['cust-name','cust-company','cust-title','cust-phone','cust-email','cust-address','cust-memo'].forEach(id=>document.getElementById(id).value='')
+  document.getElementById('cust-birthday').value=''
+  document.getElementById('cust-potential').value='보통'
+  document.getElementById('card-preview').style.display='none'
+  buildExtraFields()
+  showPage('pg-add-customer')
+}
+function editCurrentCustomer(){
+  if(!currentCustomer) return
+  const c = currentCustomer
+  document.getElementById('add-cust-title').textContent='고객 수정'
+  document.getElementById('edit-cust-id').value=c.id
+  document.getElementById('cust-name').value=c.name||''
+  document.getElementById('cust-company').value=c.company||''
+  document.getElementById('cust-title').value=c.title||''
+  document.getElementById('cust-phone').value=c.phone||''
+  document.getElementById('cust-email').value=c.email||''
+  document.getElementById('cust-birthday').value=c.birthday||''
+  document.getElementById('cust-address').value=c.address||''
+  document.getElementById('cust-potential').value=c.potential||'보통'
+  document.getElementById('cust-memo').value=c.memo||''
+  document.getElementById('card-preview').style.display='none'
+  buildExtraFields(c.extra||{})
+  showPage('pg-add-customer')
+}
+function buildExtraFields(values={}){
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  const el = document.getElementById('extra-fields')
+  el.innerHTML = cfg.extraFields.map(f=>`
+    <div class="form-group">
+      <label>${esc(f.label)}</label>
+      <input type="${f.type||'text'}" id="extra-${f.key}" placeholder="${esc(f.label)}" value="${esc(values[f.key]||'')}">
+    </div>`).join('')
+}
+async function saveCustomer(){
+  const name = document.getElementById('cust-name').value.trim()
+  if(!name){toast('이름을 입력하세요'); return}
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  const extra = {}
+  cfg.extraFields.forEach(f=>{ const v=document.getElementById('extra-'+f.key)?.value; if(v) extra[f.key]=v })
+  const row = {
+    user_id: currentUser.id,
+    name, company:document.getElementById('cust-company').value.trim()||null,
+    title:document.getElementById('cust-title').value.trim()||null,
+    phone:document.getElementById('cust-phone').value.trim()||null,
+    email:document.getElementById('cust-email').value.trim()||null,
+    birthday:document.getElementById('cust-birthday').value||null,
+    address:document.getElementById('cust-address').value.trim()||null,
+    potential:document.getElementById('cust-potential').value,
+    memo:document.getElementById('cust-memo').value.trim()||null,
+    extra: Object.keys(extra).length>0?extra:null
+  }
+  const editId = document.getElementById('edit-cust-id').value
+  if(editId){
+    await sb.from('sk_customers').update(row).eq('id',editId)
+    toast('수정되었습니다')
+    const {data:updated} = await sb.from('sk_customers').select('*').eq('id',editId).single()
+    currentCustomer=updated
+    renderCustomerDetail(updated)
+    showPage('pg-cust-detail')
+  } else {
+    const {data,error} = await sb.from('sk_customers').insert(row).select().single()
+    if(error){toast('저장 실패: '+error.message); return}
+    toast('저장되었습니다')
+    currentCustomer=data; currentCustomerId=data.id
+    renderCustomerDetail(data)
+    loadConsultations(data.id)
+    showPage('pg-cust-detail')
+  }
+}
+async function deleteCurrentCustomer(){
+  if(!currentCustomerId) return
+  if(!confirm('이 고객을 삭제하시겠습니까? 관련 상담 기록도 모두 삭제됩니다.')) return
+  await sb.from('sk_consultations').delete().eq('customer_id',currentCustomerId)
+  await sb.from('sk_reminders').delete().eq('customer_id',currentCustomerId)
+  await sb.from('sk_customers').delete().eq('id',currentCustomerId)
+  toast('삭제되었습니다')
+  goBack()
+}
+
+// OCR (namecard)
+async function processCard(e){
+  const file = e.target.files[0]
+  if(!file) return
+  document.getElementById('card-preview').style.display='block'
+  document.getElementById('card-img').src=URL.createObjectURL(file)
+  document.getElementById('card-status').textContent='명함 인식 중...'
+  const reader = new FileReader()
+  reader.onload = async ev => {
+    const b64 = ev.target.result.split(',')[1]
+    try {
+      const res = await fetch(`${EDGE}/crm-bizcard`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`},
+        body: JSON.stringify({image:b64})
+      })
+      const d = await res.json()
+      if(d.name) document.getElementById('cust-name').value=d.name
+      if(d.company) document.getElementById('cust-company').value=d.company
+      if(d.title) document.getElementById('cust-title').value=d.title
+      if(d.phone) document.getElementById('cust-phone').value=d.phone
+      if(d.email) document.getElementById('cust-email').value=d.email
+      document.getElementById('card-status').textContent='✅ 인식 완료'
+    } catch(err){
+      document.getElementById('card-status').textContent='인식 실패 - 직접 입력해주세요'
+    }
+  }
+  reader.readAsDataURL(file)
+}
+
+// ============================================================
+// CONSULTATION
+// ============================================================
+function startConsultation(){
+  if(!currentCustomer) return
+  consultData = {customerId: currentCustomer.id, audioBlob:null, audioFile:null, memo:'', checkItems:[], commissionMemo:'', productIds:[]}
+  selectedProductIds = []
+  document.getElementById('consult-title').textContent = '상담: '+currentCustomer.name
+  document.getElementById('consult-cust-info').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:28px">👤</div>
+      <div><div style="font-weight:700">${esc(currentCustomer.name)}</div>
+      <div style="font-size:13px;color:var(--muted)">${esc(currentCustomer.company||'')} ${esc(currentCustomer.phone||'')}</div></div>
+    </div>`
+  // build check items
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  const grid = document.getElementById('check-items-grid')
+  grid.innerHTML = cfg.checkItems.map(item=>`
+    <button class="check-item-btn" onclick="toggleCheckItem(this,'${esc(item)}')">${esc(item)}</button>`).join('')
+  // commission group
+  document.getElementById('commission-group').style.display =
+    cfg.checkItems.includes('수수료전화') ? 'block' : 'none'
+  // reset modes
+  switchConsultTab('record')
+  document.getElementById('rec-status').textContent='버튼을 눌러 녹음 시작'
+  document.getElementById('rec-btn').classList.remove('recording')
+  document.getElementById('rec-timer').style.display='none'
+  document.getElementById('memo-text').value=''; document.getElementById('memo-count').textContent='0'
+  document.getElementById('upload-file-name').textContent=''
+  document.getElementById('prod-search-results').innerHTML=''
+  document.getElementById('selected-products').innerHTML=''
+  document.getElementById('commission-memo').value=''
+  showPage('pg-consult')
+}
+function switchConsultTab(mode){
+  ['record','upload','memo'].forEach(m=>{
+    document.getElementById('mode-'+m).style.display=m===mode?'block':'none'
+    document.getElementById('tab-'+m).classList.toggle('active',m===mode)
+  })
+  if(mode!=='record' && mediaRecorder && mediaRecorder.state==='recording') stopRecording()
+}
+function toggleCheckItem(btn, item){
+  btn.classList.toggle('checked')
+  if(btn.classList.contains('checked')){
+    if(!consultData.checkItems.includes(item)) consultData.checkItems.push(item)
+  } else {
+    consultData.checkItems = consultData.checkItems.filter(i=>i!==item)
+  }
+  document.getElementById('commission-group').style.display =
+    consultData.checkItems.includes('수수료전화') ? 'block' : 'none'
+}
+
+// RECORDING
+async function toggleRecord(){
+  if(mediaRecorder && mediaRecorder.state==='recording'){ stopRecording(); return }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true})
+    audioChunks=[]
+    mediaRecorder = new MediaRecorder(stream)
+    mediaRecorder.ondataavailable = e=>{ if(e.data.size>0) audioChunks.push(e.data) }
+    mediaRecorder.onstop = ()=>{
+      const blob = new Blob(audioChunks, {type:'audio/webm'})
+      consultData.audioBlob = blob
+      document.getElementById('rec-status').textContent=`✅ 녹음 완료 (${formatTime(recordSeconds)})`
+      stream.getTracks().forEach(t=>t.stop())
+    }
+    mediaRecorder.start()
+    recordSeconds=0
+    document.getElementById('rec-btn').textContent='⏹️'
+    document.getElementById('rec-btn').classList.add('recording')
+    document.getElementById('rec-timer').style.display='block'
+    document.getElementById('rec-status').textContent='녹음 중...'
+    recordTimer = setInterval(()=>{
+      recordSeconds++
+      document.getElementById('rec-timer').textContent=formatTime(recordSeconds)
+    },1000)
+  } catch(err){ toast('마이크 권한이 필요합니다') }
+}
+function stopRecording(){
+  if(mediaRecorder) mediaRecorder.stop()
+  clearInterval(recordTimer)
+  document.getElementById('rec-btn').textContent='🎙️'
+  document.getElementById('rec-btn').classList.remove('recording')
+  document.getElementById('rec-timer').style.display='none'
+}
+function formatTime(s){ return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}` }
+
+function handleAudioFile(e){
+  const file = e.target.files[0]
+  if(!file) return
+  consultData.audioFile = file
+  document.getElementById('upload-file-name').textContent='📎 '+file.name
+}
+
+document.getElementById('memo-text').addEventListener('input', function(){
+  document.getElementById('memo-count').textContent=this.value.length
+  consultData.memo = this.value
+})
+
+// PRODUCT SEARCH IN CONSULTATION
+async function searchProducts(){
+  const q = document.getElementById('prod-search-input').value.trim()
+  if(!q){ document.getElementById('prod-search-results').innerHTML=''; return }
+  const {data} = await sb.from('sk_products')
+    .select('*').eq('user_id',currentUser.id)
+    .or(`name.ilike.%${q}%,code.ilike.%${q}%`).limit(5)
+  const el = document.getElementById('prod-search-results')
+  if(!data||data.length===0){ el.innerHTML='<p style="font-size:13px;color:var(--muted)">검색 결과 없음</p>'; return }
+  el.innerHTML = data.map(p=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px;background:#f8fafc;border-radius:8px;margin-bottom:4px;cursor:pointer" onclick="addProductToConsult('${p.id}','${esc(p.name)}','${esc(p.code||'')}')">
+      <span style="font-size:20px">📦</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(p.name)}</div><div style="font-size:12px;color:var(--muted)">${esc(p.code||'')} ${p.price?'· ₩'+p.price.toLocaleString():''}</div></div>
+      <span style="color:var(--primary);font-size:18px">＋</span>
+    </div>`).join('')
+}
+function addProductToConsult(id, name, code){
+  if(selectedProductIds.includes(id)){toast('이미 추가됨'); return}
+  selectedProductIds.push(id)
+  consultData.productIds = selectedProductIds
+  const el = document.getElementById('selected-products')
+  el.innerHTML += `<span class="tag tag-item" id="sprod-${id}">${esc(name)} <button onclick="removeProduct('${id}')" style="background:none;border:none;cursor:pointer;color:inherit;margin-left:2px">×</button></span>`
+  document.getElementById('prod-search-input').value=''
+  document.getElementById('prod-search-results').innerHTML=''
+}
+function removeProduct(id){
+  selectedProductIds = selectedProductIds.filter(i=>i!==id)
+  consultData.productIds = selectedProductIds
+  const el = document.getElementById('sprod-'+id)
+  if(el) el.remove()
+}
+
+async function submitConsultation(){
+  consultData.commissionMemo = document.getElementById('commission-memo').value.trim()
+  // determine mode
+  const activeTab = document.querySelector('.tab-btn.active[id^="tab-"]')?.id
+  const mode = document.getElementById('tab-record').classList.contains('active') ? 'record'
+             : document.getElementById('tab-upload').classList.contains('active') ? 'upload' : 'memo'
+  if(mode==='memo'){
+    if(!consultData.memo.trim()){ toast('메모를 입력하세요'); return }
+    await saveMemoConsultation()
+    return
+  }
+  const audioSrc = mode==='record' ? consultData.audioBlob : consultData.audioFile
+  if(!audioSrc){ toast(mode==='record'?'녹음을 먼저 완료하세요':'파일을 선택하세요'); return }
+  // STT → AI
+  showPage('pg-ai-loading')
+  document.getElementById('ai-loading-msg').textContent='음성 인식 중...'
+  try {
+    const formData = new FormData()
+    const file = audioSrc instanceof Blob ? new File([audioSrc],'recording.webm',{type:'audio/webm'}) : audioSrc
+    formData.append('file', file)
+    const sttRes = await fetch(`${EDGE}/crm-stt`,{
+      method:'POST', headers:{'Authorization':`Bearer ${SB_KEY}`}, body:formData
+    })
+    const sttData = await sttRes.json()
+    const transcript = sttData.transcript||sttData.text||''
+    if(!transcript){ throw new Error('음성 인식 결과 없음') }
+    document.getElementById('ai-loading-msg').textContent='AI 요약 생성 중...'
+    const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+    const sumRes = await fetch(`${EDGE}/crm-summarize`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${SB_KEY}`},
+      body: JSON.stringify({transcript, industry: cfg.name, checkItems: consultData.checkItems})
+    })
+    const sumData = await sumRes.json()
+    pendingConsultResult = {
+      transcript, summary: sumData.summary||'', requests: sumData.requests||'',
+      checkItems: consultData.checkItems, commissionMemo: consultData.commissionMemo,
+      productIds: consultData.productIds, customerId: consultData.customerId, memo:null
+    }
+    showConsultResult(pendingConsultResult)
+  } catch(err){
+    showPage('pg-consult')
+    toast('오류: '+err.message)
+  }
+}
+async function saveMemoConsultation(){
+  const row = {
+    customer_id: consultData.customerId, user_id: currentUser.id,
+    memo: consultData.memo, check_items: consultData.checkItems,
+    commission_memo: consultData.commissionMemo||null,
+    product_ids: consultData.productIds.length?consultData.productIds:null
+  }
+  const {error} = await sb.from('sk_consultations').insert(row)
+  if(error){ toast('저장 실패: '+error.message); return }
+  await sb.from('sk_customers').update({last_contacted_at:new Date().toISOString()}).eq('id',consultData.customerId)
+  toast('상담이 저장되었습니다')
+  showPage('pg-cust-detail')
+  loadConsultations(consultData.customerId)
+}
+function showConsultResult(r){
+  document.getElementById('result-summary').textContent = r.summary||r.memo||'-'
+  document.getElementById('result-requests').textContent = r.requests||'-'
+  document.getElementById('result-checks').innerHTML = (r.checkItems||[]).map(k=>{
+    const label = k==='수수료전화'&&r.commissionMemo?`수수료전화(${r.commissionMemo})`:k
+    return `<span class="tag tag-item">${esc(label)}</span>`
+  }).join('')
+  document.getElementById('result-transcript').textContent = r.transcript||''
+  document.getElementById('transcript-toggle').textContent='펼치기'
+  document.getElementById('result-transcript').style.display='none'
+  const prodCard = document.getElementById('result-products-card')
+  if(r.productIds&&r.productIds.length){
+    prodCard.style.display='block'
+    document.getElementById('result-products').innerHTML = r.productIds.map(id=>`<span class="tag tag-item">📦 ${id}</span>`).join('')
+  } else prodCard.style.display='none'
+  showPage('pg-consult-result')
+}
+function toggleTranscript(){
+  const el = document.getElementById('result-transcript')
+  const btn = document.getElementById('transcript-toggle')
+  el.style.display = el.style.display==='none'?'block':'none'
+  btn.textContent = el.style.display==='none'?'펼치기':'접기'
+}
+async function saveConsultResult(){
+  if(!pendingConsultResult) return
+  const r = pendingConsultResult
+  const row = {
+    customer_id:r.customerId, user_id:currentUser.id,
+    summary:r.summary, requests:r.requests, transcript:r.transcript,
+    check_items:r.checkItems, commission_memo:r.commissionMemo||null,
+    product_ids:r.productIds.length?r.productIds:null
+  }
+  const {error} = await sb.from('sk_consultations').insert(row)
+  if(error){toast('저장 실패: '+error.message); return}
+  await sb.from('sk_customers').update({last_contacted_at:new Date().toISOString()}).eq('id',r.customerId)
+  toast('저장되었습니다')
+  pendingConsultResult=null
+  showPage('pg-cust-detail')
+  loadConsultations(r.customerId)
+}
+function finishConsultation(){
+  showPage('pg-cust-detail')
+}
+
+// ============================================================
+// REMINDERS
+// ============================================================
+async function loadReminderBadge(){
+  if(!currentUser) return
+  const today = new Date().toISOString().slice(0,10)
+  const {count} = await sb.from('sk_reminders').select('id',{count:'exact',head:true})
+    .eq('user_id',currentUser.id).eq('is_done',false).lte('due_date',today)
+  const badges = ['rem-badge','rem-badge2','rem-badge3']
+  badges.forEach(id=>{
+    const el = document.getElementById(id)
+    if(el){ el.style.display=count>0?'flex':'none'; el.textContent=count>0?count:''}
+  })
+}
+async function loadReminders(){
+  const {data} = await sb.from('sk_reminders')
+    .select('*,sk_customers(name,id)')
+    .eq('user_id',currentUser.id)
+    .eq('is_done', remTabState==='done')
+    .order('due_date')
+  const el = document.getElementById('rem-list')
+  if(!data||data.length===0){ el.innerHTML='<div class="empty"><div class="icon">🔔</div><p>알림이 없습니다</p></div>'; return }
+  const today = new Date().toISOString().slice(0,10)
+  el.innerHTML = data.map(r=>{
+    const isOd = !r.is_done && r.due_date < today
+    return `<div class="reminder-item${r.is_done?' done':''}${isOd?' overdue':''}">
+      <span style="font-size:20px">${reminderIcon(r.type)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600">${esc(r.title)}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(r.sk_customers?.name||'')} · ${fmtDate(r.due_date)}</div>
+        ${r.note?`<div style="font-size:12px;color:var(--muted)">${esc(r.note)}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${!r.is_done?`<button onclick="doneReminder('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:18px">✅</button>`:''}
+        <button onclick="deleteReminder('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--danger)">🗑️</button>
+      </div>
+    </div>`
+  }).join('')
+}
+function switchRemTab(t){
+  remTabState=t
+  document.getElementById('tab-rem-pending').classList.toggle('active',t==='pending')
+  document.getElementById('tab-rem-done').classList.toggle('active',t==='done')
+  loadReminders()
+}
+function addReminder(){
+  if(!currentCustomerId){ toast('고객을 먼저 선택하세요'); return }
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  document.getElementById('rem-cust-id').value = currentCustomerId
+  document.getElementById('rem-type').innerHTML = cfg.remType.map(t=>`<option>${esc(t)}</option>`).join('')
+  document.getElementById('rem-title').value=''
+  document.getElementById('rem-note').value=''
+  document.getElementById('rem-date').value = new Date().toISOString().slice(0,10)
+  openModal('rem-modal')
+}
+function addReminderGlobal(){
+  const cfg = INDUSTRY[currentIndustry]||INDUSTRY.general
+  document.getElementById('rem-cust-id').value=''
+  document.getElementById('rem-type').innerHTML = cfg.remType.map(t=>`<option>${esc(t)}</option>`).join('')
+  document.getElementById('rem-title').value=''
+  document.getElementById('rem-note').value=''
+  document.getElementById('rem-date').value = new Date().toISOString().slice(0,10)
+  openModal('rem-modal')
+}
+async function saveReminder(){
+  const custId = document.getElementById('rem-cust-id').value
+  const title = document.getElementById('rem-title').value.trim()
+  const dueDate = document.getElementById('rem-date').value
+  if(!title||!dueDate){toast('제목과 날짜를 입력하세요'); return}
+  const row = {
+    customer_id: custId||null, user_id:currentUser.id,
+    type: document.getElementById('rem-type').value,
+    title, due_date:dueDate,
+    note: document.getElementById('rem-note').value.trim()||null,
+    is_done:false
+  }
+  const {error} = await sb.from('sk_reminders').insert(row)
+  if(error){toast('저장 실패: '+error.message); return}
+  closeModal('rem-modal'); toast('알림이 저장되었습니다')
+  loadReminderBadge()
+  if(document.getElementById('pg-reminders').classList.contains('active')) loadReminders()
+}
+async function doneReminder(id){
+  await sb.from('sk_reminders').update({is_done:true}).eq('id',id)
+  loadReminderBadge()
+  loadDashboard()
+  if(document.getElementById('pg-reminders').classList.contains('active')) loadReminders()
+}
+async function deleteReminder(id){
+  if(!confirm('삭제하시겠습니까?')) return
+  await sb.from('sk_reminders').delete().eq('id',id)
+  loadReminderBadge(); loadReminders()
+}
+
+// ============================================================
+// PRODUCTS
+// ============================================================
+async function loadProducts(reset=true){
+  if(reset) prodPage=0
+  const q = document.getElementById('prod-filter').value.trim()
+  let query = sb.from('sk_products').select('*').eq('user_id',currentUser.id)
+  if(q) query = query.or(`name.ilike.%${q}%,code.ilike.%${q}%`)
+  query = query.order('name').range(prodPage*PROD_PAGE_SIZE, (prodPage+1)*PROD_PAGE_SIZE-1)
+  const {data} = await query
+  const el = document.getElementById('prod-list')
+  if(reset) el.innerHTML=''
+  if(!data||data.length===0){
+    if(reset) el.innerHTML='<div class="empty"><div class="icon">📦</div><p>등록된 제품이 없습니다</p></div>'
+    return
+  }
+  el.innerHTML += data.map(p=>`
+    <div class="product-card">
+      <div class="product-img">${p.image_url?`<img src="${esc(p.image_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`:'📦'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700">${esc(p.name)}</div>
+        ${p.code?`<div style="font-size:12px;color:var(--muted)">코드: ${esc(p.code)}</div>`:''}
+        ${p.category?`<div style="font-size:12px;color:var(--muted)">분류: ${esc(p.category)}</div>`:''}
+        ${p.price?`<div style="font-size:14px;font-weight:600;color:var(--primary)">₩${p.price.toLocaleString()}</div>`:''}
+        ${p.specs&&Object.keys(p.specs).length>0?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${Object.entries(p.specs).map(([k,v])=>`${k}:${v}`).join(' · ')}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button onclick="editProduct('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:16px">✏️</button>
+        <button onclick="deleteProduct('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:16px">🗑️</button>
+      </div>
+    </div>`).join('')
+}
+function filterProducts(){ loadProducts(true) }
+function loadMoreProducts(){ prodPage++; loadProducts(false) }
+function showAddProduct(){
+  editingProductId=null
+  document.getElementById('prod-modal-title').textContent='제품 추가'
+  document.getElementById('prod-id').value=''
+  ;['prod-name','prod-code','prod-category','prod-specs'].forEach(id=>document.getElementById(id).value='')
+  document.getElementById('prod-price').value=''
+  openModal('prod-modal')
+}
+async function editProduct(id){
+  const {data:p} = await sb.from('sk_products').select('*').eq('id',id).single()
+  if(!p) return
+  editingProductId=id
+  document.getElementById('prod-modal-title').textContent='제품 수정'
+  document.getElementById('prod-id').value=id
+  document.getElementById('prod-name').value=p.name||''
+  document.getElementById('prod-code').value=p.code||''
+  document.getElementById('prod-category').value=p.category||''
+  document.getElementById('prod-price').value=p.price||''
+  document.getElementById('prod-specs').value=p.specs?JSON.stringify(p.specs,null,2):''
+  openModal('prod-modal')
+}
+async function saveProduct(){
+  const name = document.getElementById('prod-name').value.trim()
+  if(!name){toast('제품명을 입력하세요'); return}
+  let specs=null
+  const specStr = document.getElementById('prod-specs').value.trim()
+  if(specStr){ try{specs=JSON.parse(specStr)}catch(e){toast('사양 JSON 형식 오류'); return} }
+  const row = {
+    user_id:currentUser.id, name,
+    code:document.getElementById('prod-code').value.trim()||null,
+    category:document.getElementById('prod-category').value.trim()||null,
+    price:parseInt(document.getElementById('prod-price').value)||null,
+    specs, industry:currentIndustry
+  }
+  const id = document.getElementById('prod-id').value
+  if(id) await sb.from('sk_products').update(row).eq('id',id)
+  else await sb.from('sk_products').insert(row)
+  closeModal('prod-modal'); toast('저장되었습니다'); loadProducts()
+}
+async function deleteProduct(id){
+  if(!confirm('삭제하시겠습니까?')) return
+  await sb.from('sk_products').delete().eq('id',id)
+  toast('삭제되었습니다'); loadProducts()
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+async function loadAdminPage(){
+  const {data:pending} = await sb.from('sk_profiles').select('*').eq('status','pending')
+  const el = document.getElementById('pending-users')
+  if(!pending||pending.length===0) el.innerHTML='<p style="color:var(--muted);font-size:14px">대기중인 가입자 없음</p>'
+  else el.innerHTML = pending.map(u=>`
+    <div class="approve-item">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600">${esc(u.username)}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(INDUSTRY[u.industry]?.name||u.industry)} · ${fmtDate(u.created_at)}</div>
+      </div>
+      <button onclick="approveUser('${u.id}','approved')" class="btn btn-sm btn-primary" style="margin-right:6px">승인</button>
+      <button onclick="approveUser('${u.id}','rejected')" class="btn btn-sm btn-danger">거절</button>
+    </div>`).join('')
+
+  const {data:all} = await sb.from('sk_profiles').select('*').order('created_at',{ascending:false})
+  const allEl = document.getElementById('all-users')
+  allEl.innerHTML = (all||[]).map(u=>`
+    <div class="approve-item">
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600">${esc(u.username)}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(INDUSTRY[u.industry]?.name||u.industry)} · ${u.role} · <span style="color:${u.status==='approved'?'var(--success)':u.status==='rejected'?'var(--danger)':'var(--accent)'}">${u.status}</span></div>
+      </div>
+      ${u.status!=='rejected'?`<button onclick="approveUser('${u.id}','rejected')" class="btn btn-sm" style="background:#fef2f2;color:var(--danger);border:1px solid #fecaca">차단</button>`:'<button onclick="approveUser(\''+u.id+'\',\'approved\')" class="btn btn-sm btn-outline">복구</button>'}
+    </div>`).join('')
+}
+async function approveUser(id, status){
+  await sb.from('sk_profiles').update({status}).eq('id',id)
+  toast(status==='approved'?'승인되었습니다':'거절되었습니다')
+  loadAdminPage()
+}
+
+// Override showPage to load admin
+const _origShowPage = showPage
+window.showPage = function(id, push=true){
+  _origShowPage(id, push)
+  if(id==='pg-admin') loadAdminPage()
+}
+
+// ============================================================
+// INIT
+// ============================================================
+;(async ()=>{
+  document.getElementById('pg-loading').classList.add('active')
+  document.getElementById('pg-auth').classList.remove('active')
+  const {data:{session}} = await sb.auth.getSession()
+  if(session?.user){
+    await onLogin(session.user)
+  } else {
+    showPage('pg-auth',false)
+  }
+})()
+
+// Service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{})
+}
+</script>
+</body>
+</html>
