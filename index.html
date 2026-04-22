@@ -68,7 +68,7 @@ textarea{resize:none;min-height:80px}
 .list-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .list-body{flex:1;min-width:0}
 .list-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.list-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowraw;overflow:hidden;text-overflow:ellipsis}
 /* DIVIDER */
 .divider{height:1px;background:var(--border);margin:12px 0}
 /* EMPTY STATE */
@@ -484,7 +484,10 @@ textarea{resize:none;min-height:80px}
 <div id="pg-products" class="page">
   <div class="header">
     <h1>제품 DB</h1>
-    <button class="icon-btn" onclick="showAddProduct()">＋</button>
+    <div style="display:flex;gap:4px">
+      <button class="icon-btn" title="CSV 일괄 등록" onclick="openCSVImport()" style="font-size:18px">📥</button>
+      <button class="icon-btn" title="제품 추가" onclick="showAddProduct()">＋</button>
+    </div>
   </div>
   <div class="content">
     <div class="search-bar"><input type="search" id="prod-filter" placeholder="제품명, 코드 검색" oninput="filterProducts()"></div>
@@ -534,13 +537,70 @@ textarea{resize:none;min-height:80px}
   <div class="modal">
     <div class="modal-title" id="prod-modal-title">제품 추가</div>
     <input type="hidden" id="prod-id">
+    <input type="hidden" id="prod-image-url">
+
+    <!-- Thumbnail -->
+    <div class="form-group">
+      <label>제품 사진</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="prod-thumb-preview" style="width:64px;height:64px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden">📦</div>
+        <input type="file" id="prod-thumb-file" accept="image/*" style="flex:1;font-size:12px" onchange="onThumbChange(event)">
+        <button type="button" class="btn btn-outline btn-sm" onclick="clearThumb()" style="padding:4px 8px">삭제</button>
+      </div>
+    </div>
+
     <div class="form-group"><label>제품명 *</label><input type="text" id="prod-name" placeholder="제품명"></div>
     <div class="form-group"><label>코드/식별번호</label><input type="text" id="prod-code" placeholder="코드"></div>
     <div class="form-group"><label>카테고리</label><input type="text" id="prod-category" placeholder="카테고리"></div>
     <div class="form-group"><label>가격</label><input type="number" id="prod-price" placeholder="단가 (원)"></div>
-    <div class="form-group"><label>추가 사양 (JSON)</label><textarea id="prod-specs" placeholder='{"색상":"흰색","사이즈":"M"}' style="min-height:60px;font-size:12px;font-family:monospace"></textarea></div>
+
+    <!-- Auto-specific structured fields -->
+    <div id="prod-auto-specific" style="display:none;border-top:1px solid #e5e7eb;padding-top:10px;margin-top:4px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">🚗 자동차 전용 항목</div>
+      <div class="form-group">
+        <label>트림</label>
+        <input type="text" id="prod-auto-trim" placeholder="예: Exclusive / Prestige / Calligraphy">
+      </div>
+      <div class="form-group">
+        <label>인승</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <label style="font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="prod-auto-seating" value="" checked>미지정</label>
+          <label style="font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="prod-auto-seating" value="5인승">5인승</label>
+          <label style="font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="prod-auto-seating" value="6인승">6인승</label>
+          <label style="font-weight:normal;display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="prod-auto-seating" value="7인승">7인승</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>선택 옵션 (상담 시 체크박스로 표시됨)</label>
+        <div id="prod-auto-options"></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addAutoOption()" style="margin-top:4px">＋ 옵션 추가</button>
+      </div>
+    </div>
+
+    <!-- Generic extra specs: simple key:value format -->
+    <div class="form-group">
+      <label>추가 사양 <span style="color:var(--muted);font-weight:normal;font-size:11px">(한 줄에 하나, "키: 값" 형식)</span></label>
+      <textarea id="prod-specs" placeholder="색상: 흰색&#10;사이즈: M&#10;보증: 3년" style="min-height:60px;font-size:13px"></textarea>
+    </div>
+
     <button class="btn btn-primary" onclick="saveProduct()">저장</button>
     <button class="btn btn-outline" style="margin-top:8px" onclick="closeModal('prod-modal')">취소</button>
+  </div>
+</div>
+
+<!-- CSV Bulk Import Modal -->
+<div class="modal-bg" id="prod-csv-modal">
+  <div class="modal">
+    <div class="modal-title">📥 제품 CSV 일괄 등록</div>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 10px 0">엑셀/스프레드시트로 정리한 제품 목록을 한 번에 등록합니다.</p>
+    <button class="btn btn-outline btn-sm" onclick="downloadCSVTemplate()" style="margin-bottom:10px">📄 템플릿 CSV 내려받기</button>
+    <div class="form-group">
+      <label>CSV 파일 선택</label>
+      <input type="file" id="prod-csv-file" accept=".csv,text/csv" onchange="previewCSV(event)">
+    </div>
+    <div id="prod-csv-preview" style="font-size:12px;max-height:220px;overflow:auto;margin-bottom:10px"></div>
+    <button class="btn btn-primary" id="prod-csv-confirm" onclick="importCSV()" style="display:none">위 내용으로 등록</button>
+    <button class="btn btn-outline" style="margin-top:8px" onclick="closeModal('prod-csv-modal')">취소</button>
   </div>
 </div>
 <!-- Consult Detail Modal -->
@@ -632,6 +692,9 @@ let recordSeconds = 0
 let pageHistory = []
 
 // ============================================================
+// STATE
+// ============================================================
+================
 // UTILS
 // ============================================================
 function esc(s){ return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '' }
@@ -1382,12 +1445,90 @@ async function loadProducts(reset=true){
 }
 function filterProducts(){ loadProducts(true) }
 function loadMoreProducts(){ prodPage++; loadProducts(false) }
+// ---- Thumbnail ----
+function onThumbChange(e){
+  const f = e.target.files[0]
+  if(!f) return
+  if(f.size > 8*1024*1024){ toast('8MB 이하 이미지를 선택하세요'); e.target.value=''; return }
+  const reader = new FileReader()
+  reader.onload = ev => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const MAX = 480
+      let w = img.width, h = img.height
+      if(w > MAX || h > MAX){
+        const r = Math.min(MAX/w, MAX/h)
+        w = Math.round(w*r); h = Math.round(h*r)
+      }
+      canvas.width = w; canvas.height = h
+      canvas.getContext('2d').drawImage(img,0,0,w,h)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82)
+      document.getElementById('prod-image-url').value = dataUrl
+      document.getElementById('prod-thumb-preview').innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">`
+    }
+    img.src = ev.target.result
+  }
+  reader.readAsDataURL(f)
+}
+function clearThumb(){
+  document.getElementById('prod-image-url').value = ''
+  document.getElementById('prod-thumb-file').value = ''
+  document.getElementById('prod-thumb-preview').innerHTML = '📦'
+}
+
+// ---- Auto-industry options rows ----
+function addAutoOption(name='', price=''){
+  const wrap = document.getElementById('prod-auto-options')
+  const row = document.createElement('div')
+  row.style.cssText = 'display:flex;gap:6px;margin-bottom:4px;align-items:center'
+  row.innerHTML = `
+    <input type="text" placeholder="옵션명 (예: 선루프)" value="" style="flex:2" class="prod-auto-opt-name">
+    <input type="number" placeholder="가격(원)" value="" style="flex:1;min-width:0" class="prod-auto-opt-price">
+    <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#ef4444;padding:0 4px">✕</button>
+  `
+  row.querySelector('.prod-auto-opt-name').value = name
+  if(price) row.querySelector('.prod-auto-opt-price').value = price
+  wrap.appendChild(row)
+}
+
+// ---- Specs: simple "key: value" text <-> object ----
+function parseSimpleSpecs(text){
+  if(!text || !text.trim()) return null
+  const t = text.trim()
+  if(t.startsWith('{')){ try{ return JSON.parse(t) }catch(e){} }
+  const out = {}
+  text.split(/\r?\n/).forEach(line => {
+    const m = line.match(/^\s*([^:：]+)\s*[:：]\s*(.+?)\s*$/)
+    if(m) out[m[1].trim()] = m[2].trim()
+  })
+  return Object.keys(out).length ? out : null
+}
+const AUTO_STRUCT_KEYS = new Set(['trim','seating','options'])
+function specsToSimpleText(specs){
+  if(!specs || typeof specs !== 'object') return ''
+  return Object.entries(specs)
+    .filter(([k])=>!AUTO_STRUCT_KEYS.has(k))
+    .map(([k,v])=>{
+      if(v===null||v===undefined) return ''
+      if(typeof v === 'object') return `${k}: ${JSON.stringify(v)}`
+      return `${k}: ${v}`
+    }).filter(Boolean).join('\n')
+}
+
 function showAddProduct(){
   editingProductId=null
   document.getElementById('prod-modal-title').textContent='제품 추가'
   document.getElementById('prod-id').value=''
-  ;['prod-name','prod-code','prod-category','prod-specs'].forEach(id=>document.getElementById(id).value='')
+  ;['prod-name','prod-code','prod-category','prod-specs','prod-image-url'].forEach(id=>document.getElementById(id).value='')
   document.getElementById('prod-price').value=''
+  document.getElementById('prod-thumb-file').value=''
+  document.getElementById('prod-thumb-preview').innerHTML='📦'
+  document.getElementById('prod-auto-trim').value=''
+  const seatDefault = document.querySelector('input[name="prod-auto-seating"][value=""]')
+  if(seatDefault) seatDefault.checked = true
+  document.getElementById('prod-auto-options').innerHTML=''
+  document.getElementById('prod-auto-specific').style.display = currentIndustry==='auto' ? 'block' : 'none'
   openModal('prod-modal')
 }
 async function editProduct(id){
@@ -1400,20 +1541,49 @@ async function editProduct(id){
   document.getElementById('prod-code').value=p.code||''
   document.getElementById('prod-category').value=p.category||''
   document.getElementById('prod-price').value=p.price||''
-  document.getElementById('prod-specs').value=p.specs?JSON.stringify(p.specs,null,2):''
+  // Thumbnail
+  document.getElementById('prod-thumb-file').value=''
+  document.getElementById('prod-image-url').value = p.image_url||''
+  document.getElementById('prod-thumb-preview').innerHTML = p.image_url
+    ? `<img src="${esc(p.image_url)}" style="width:100%;height:100%;object-fit:cover">`
+    : '📦'
+  // Auto structured fields
+  document.getElementById('prod-auto-trim').value = (p.specs && p.specs.trim) || ''
+  const seatVal = (p.specs && p.specs.seating) || ''
+  const seatRadio = document.querySelector(`input[name="prod-auto-seating"][value="${seatVal}"]`)
+  if(seatRadio) seatRadio.checked = true
+  else { const d = document.querySelector('input[name="prod-auto-seating"][value=""]'); if(d) d.checked = true }
+  document.getElementById('prod-auto-options').innerHTML=''
+  if(p.specs && Array.isArray(p.specs.options)) p.specs.options.forEach(o=>addAutoOption(o.name||'', o.price||''))
+  document.getElementById('prod-auto-specific').style.display = (p.industry||currentIndustry)==='auto' ? 'block' : 'none'
+  // Generic specs
+  document.getElementById('prod-specs').value = specsToSimpleText(p.specs)
   openModal('prod-modal')
 }
 async function saveProduct(){
   const name = document.getElementById('prod-name').value.trim()
   if(!name){toast('제품명을 입력하세요'); return}
-  let specs=null
-  const specStr = document.getElementById('prod-specs').value.trim()
-  if(specStr){ try{specs=JSON.parse(specStr)}catch(e){toast('사양 JSON 형식 오류'); return} }
+  let specs = parseSimpleSpecs(document.getElementById('prod-specs').value) || {}
+  if(currentIndustry==='auto'){
+    const trim = document.getElementById('prod-auto-trim').value.trim()
+    if(trim) specs.trim = trim
+    const seatEl = document.querySelector('input[name="prod-auto-seating"]:checked')
+    if(seatEl && seatEl.value) specs.seating = seatEl.value
+    const opts = []
+    document.querySelectorAll('#prod-auto-options > div').forEach(row => {
+      const n = row.querySelector('.prod-auto-opt-name').value.trim()
+      const pr = parseInt(row.querySelector('.prod-auto-opt-price').value)||0
+      if(n) opts.push({name:n, price:pr})
+    })
+    if(opts.length) specs.options = opts
+  }
+  if(!specs || Object.keys(specs).length === 0) specs = null
   const row = {
     user_id:currentUser.id, name,
     code:document.getElementById('prod-code').value.trim()||null,
     category:document.getElementById('prod-category').value.trim()||null,
     price:parseInt(document.getElementById('prod-price').value)||null,
+    image_url:document.getElementById('prod-image-url').value||null,
     specs, industry:currentIndustry
   }
   const id = document.getElementById('prod-id').value
@@ -1425,6 +1595,133 @@ async function deleteProduct(id){
   if(!confirm('삭제하시겠습니까?')) return
   await sb.from('sk_products').delete().eq('id',id)
   toast('삭제되었습니다'); loadProducts()
+}
+
+// ---- CSV Bulk Import ----
+const CSV_TEMPLATE = '\uFEFF제품명,코드,카테고리,가격,썸네일URL,사양\n' +
+  '아이오닉 9 Calligraphy,HYN-IQ9-CAL,SUV,82270000,,트림:Calligraphy|인승:7인승\n' +
+  '아이오닉 9 Prestige,HYN-IQ9-PRE,SUV,77150000,,트림:Prestige|인승:7인승\n' +
+  '아이오닉 9 Exclusive,HYN-IQ9-EXC,SUV,71190000,,트림:Exclusive|인승:7인승\n'
+function downloadCSVTemplate(){
+  const blob = new Blob([CSV_TEMPLATE], {type:'text/csv;charset=utf-8'})
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = '제품등록_템플릿.csv'
+  document.body.appendChild(a); a.click(); a.remove()
+  setTimeout(()=>URL.revokeObjectURL(url), 1000)
+}
+function openCSVImport(){
+  document.getElementById('prod-csv-file').value = ''
+  document.getElementById('prod-csv-preview').innerHTML = ''
+  document.getElementById('prod-csv-confirm').style.display = 'none'
+  csvPending = null
+  openModal('prod-csv-modal')
+}
+function parseCSV(text){
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1)
+  const rows = []
+  let row = [], field = '', inQuotes = false
+  for(let i=0; i<text.length; i++){
+    const c = text[i], next = text[i+1]
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++ }
+      else if(c === '"'){ inQuotes = false }
+      else { field += c }
+    } else {
+      if(c === '"'){ inQuotes = true }
+      else if(c === ','){ row.push(field); field = '' }
+      else if(c === '\n' || c === '\r'){
+        if(c === '\r' && next === '\n') i++
+        row.push(field); field = ''
+        if(row.some(x => x !== '')) rows.push(row)
+        row = []
+      } else { field += c }
+    }
+  }
+  if(field !== '' || row.length){ row.push(field); if(row.some(x => x !== '')) rows.push(row) }
+  return rows
+}
+let csvPending = null
+function previewCSV(e){
+  const f = e.target.files[0]
+  if(!f) return
+  const reader = new FileReader()
+  reader.onload = ev => {
+    let rows
+    try { rows = parseCSV(ev.target.result) }
+    catch(err){ toast('CSV 파싱 실패'); return }
+    if(rows.length < 2){ toast('CSV에 데이터가 없습니다'); return }
+    // Skip header row
+    const data = rows.slice(1).map(r => ({
+      name: (r[0]||'').trim(),
+      code: (r[1]||'').trim(),
+      category: (r[2]||'').trim(),
+      price: parseInt((r[3]||'').replace(/[^\d-]/g,''))||null,
+      image_url: (r[4]||'').trim(),
+      specs_str: (r[5]||'').trim()
+    })).filter(r => r.name)
+    if(data.length === 0){ toast('유효한 행이 없습니다 (1행은 헤더)'); return }
+    csvPending = data
+    document.getElementById('prod-csv-preview').innerHTML = `
+      <div style="font-weight:600;margin-bottom:6px">미리보기 (총 ${data.length}건)</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f1f5f9">
+          <th style="padding:4px 6px;text-align:left;font-size:11px;font-weight:600">제품명</th>
+          <th style="padding:4px 6px;text-align:left;font-size:11px;font-weight:600">코드</th>
+          <th style="padding:4px 6px;text-align:right;font-size:11px;font-weight:600">가격</th>
+        </tr></thead>
+        <tbody>${data.slice(0,10).map(r=>`<tr>
+          <td style="padding:3px 6px;border-top:1px solid #e5e7eb">${esc(r.name)}</td>
+          <td style="padding:3px 6px;border-top:1px solid #e5e7eb;color:#64748b">${esc(r.code||'')}</td>
+          <td style="padding:3px 6px;border-top:1px solid #e5e7eb;text-align:right">${r.price?'₩'+r.price.toLocaleString():''}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      ${data.length>10?`<div style="font-size:11px;color:#64748b;margin-top:4px">...외 ${data.length-10}건</div>`:''}
+    `
+    document.getElementById('prod-csv-confirm').style.display = 'block'
+  }
+  reader.readAsText(f, 'utf-8')
+}
+async function importCSV(){
+  if(!csvPending || csvPending.length === 0){ toast('업로드할 데이터가 없습니다'); return }
+  const rows = csvPending.map(r => {
+    let specs = null
+    if(r.specs_str){
+      const t = r.specs_str.trim()
+      if(t.startsWith('{')){ try{ specs = JSON.parse(t) }catch(e){} }
+      else {
+        specs = {}
+        t.split('|').forEach(pair => {
+          const m = pair.match(/^\s*([^:：]+)\s*[:：]\s*(.+?)\s*$/)
+          if(m) specs[m[1].trim()] = m[2].trim()
+        })
+        if(Object.keys(specs).length === 0) specs = null
+      }
+    }
+    return {
+      user_id: currentUser.id,
+      name: r.name,
+      code: r.code || null,
+      category: r.category || null,
+      price: r.price,
+      image_url: r.image_url || null,
+      specs, industry: currentIndustry
+    }
+  })
+  const btn = document.getElementById('prod-csv-confirm')
+  btn.disabled = true; btn.textContent = '등록 중...'
+  let ok = 0, fail = 0
+  for(let i=0; i<rows.length; i+=100){
+    const chunk = rows.slice(i, i+100)
+    const {error} = await sb.from('sk_products').insert(chunk)
+    if(error){ fail += chunk.length; console.error('CSV import error:', error) }
+    else ok += chunk.length
+  }
+  btn.disabled = false; btn.textContent = '위 내용으로 등록'
+  csvPending = null
+  closeModal('prod-csv-modal')
+  toast(`등록 완료: ${ok}건 성공${fail?`, ${fail}건 실패`:''}`, 4000)
+  loadProducts()
 }
 
 // ============================================================
